@@ -1,0 +1,49 @@
+
+name: Build Physics Lab APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'PhysicsLab_32_Lessons.zip'
+      - '.github/workflows/android-apk.yml'
+      - 'app/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Install Physics Lessons
+        run: |
+          test -f PhysicsLab_32_Lessons.zip
+          mkdir -p app/src/main/assets
+          unzip -p PhysicsLab_32_Lessons.zip index.html > app/src/main/assets/index.html
+          test -s app/src/main/assets/index.html
+
+      - name: Build Android APK
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PhysicsLab-Android6-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
